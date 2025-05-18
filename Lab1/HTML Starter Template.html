@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pets and the Pandemic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+<header>
+    <h1>Pets and the Pandemic</h1>
+    <h2>A report from Animal Medicines Australia (AMA)</h2>
+</header>
+
+<main>
+    <section class="intro">
+        <p>
+            A report from Animal Medicines Australia (AMA) has found that many Australians took the opportunity to introduce a pet into their household during the pandemic.
+            Their survey indicated that there was a significant increase in the percent of households taking in a new <strong>dog</strong>, <strong>fish</strong> or <strong>bird</strong>.
+            Their research also indicated that pets had a number of <em>positive influences</em> on their lives such as:
+        </p>
+        <ul>
+            <li>Companionship</li>
+            <li>Better mental health</li>
+            <li>Joy and happiness</li>
+        </ul>
+    </section>
+
+    <section class="gallery">
+        <h3>Australia’s Favourite Pets</h3>
+        <div class="images">
+            <figure>
+                <img src="dog.png" alt="Dog">
+                <figcaption>Photo by Leah Kelley from Pexels</figcaption>
+            </figure>
+            <figure>
+                <img src="cat.jpg" alt="Cat">
+                <figcaption>Photo by Dids from Pexels</figcaption>
+            </figure>
+            <figure>
+                <img src="fish.jpg" alt="Fish">
+                <figcaption>Photo by Алексей Мойса from Pexels</figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <section class="policy">
+        <p>
+            With the increase in pet ownership, the AMA are encouraging policy makers to consider the needs of companion animals and their owners when considering rental,
+            strata and body corporate regulations as well as accepting animals in public places and transport.
+        </p>
+    </section>
+
+    <section class="data-table">
+        <h3>Pet Ownership in Australia (Interactive D3 Chart)</h3>
+        <div>
+            <button onclick="updateChart(0)">2019</button>
+            <button onclick="updateChart(1)">2021</button>
+            <button onclick="updateChart(2)">Change (2021 - 2019)</button>
+        </div>
+        <figure>
+            <svg id="chart" width="800" height="400" role="img" aria-label=""></svg>
+            <figcaption id="caption">Pet ownership in 2019</figcaption>
+        </figure>
+    </section>
+
+    <section class="svg-shapes">
+        <h3>SVG Shapes Practice</h3>
+        <svg width="500" height="150" style="background-color: #f0f8ff; border: 1px solid #ccc;">
+            <!-- Circle -->
+            <circle cx="60" cy="75" r="30" fill="cornflowerblue" stroke="navy" stroke-width="3" opacity="0.9" />
+            <!-- Rectangle -->
+            <rect x="120" y="50" width="60" height="50" fill="tomato" stroke="darkred" stroke-width="2" opacity="0.8"/>
+            <!-- Ellipse -->
+            <ellipse cx="240" cy="75" rx="40" ry="25" fill="mediumseagreen" stroke="green" stroke-width="2" opacity="0.7"/>
+            <!-- Line -->
+            <line x1="320" y1="40" x2="420" y2="110" stroke="#333" stroke-width="3" />
+        </svg>
+    </section>
+</main>
+
+<footer>
+    COS30045 Data Visualisation
+</footer>
+
+<script>
+    const svg = d3.select("#chart");
+    const width = +svg.attr("width");
+    const height = +svg.attr("height");
+    const margin = { top: 30, right: 20, bottom: 50, left: 60 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+
+    const chartGroup = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const xScale = d3.scaleBand().padding(0.2).range([0, chartWidth]);
+    const yScale = d3.scaleLinear().range([chartHeight, 0]);
+
+    const xAxisGroup = chartGroup.append("g")
+        .attr("transform", `translate(0,${chartHeight})`);
+    const yAxisGroup = chartGroup.append("g");
+
+    let dataset = [];
+
+    d3.csv("pet_ownership.csv").then(data => {
+        dataset = data.map(d => ({
+            animal: d.animal,
+            pets2019: +d.pets2019,
+            pets2021: +d.pets2021,
+            change: +d.pets2021 - +d.pets2019
+        }));
+        updateChart(0);
+    });
+
+    function updateChart(mode) {
+        let data, caption;
+        if (mode === 0) {
+            data = dataset.map(d => ({ group: d.animal, year: "2019", value: d.pets2019 }));
+            caption = "Pet ownership in 2019";
+        } else if (mode === 1) {
+            data = dataset.map(d => ({ group: d.animal, year: "2021", value: d.pets2021 }));
+            caption = "Pet ownership in 2021";
+        } else {
+            data = [];
+            dataset.forEach(d => {
+                data.push({ group: d.animal, year: "2019", value: d.pets2019 });
+                data.push({ group: d.animal, year: "2021", value: d.pets2021 });
+            });
+            caption = "Comparison of pet ownership in 2019 vs 2021";
+        }
+
+        const groups = Array.from(new Set(data.map(d => d.group)));
+        const years = ["2019", "2021"];
+
+        xScale.domain(groups);
+        yScale.domain([0, d3.max(data, d => d.value) * 1.2]);
+
+        let innerScale = null;
+        if (mode === 2) {
+            innerScale = d3.scaleBand()
+                .domain(years)
+                .range([0, xScale.bandwidth()])
+                .padding(0.05);
+        }
+
+        const color = d => {
+            if (d.year === "2019") return "#42a5f5";
+            if (d.year === "2021") return "#66bb6a";
+            return "#ccc";
+        };
+
+        const bars = chartGroup.selectAll(".bar").data(data, d => d.group + d.year);
+        bars.exit().remove();
+
+        bars.enter().append("rect")
+            .attr("class", "bar")
+            .attr("y", chartHeight)
+            .attr("height", 0)
+            .attr("fill", color)
+            .merge(bars)
+            .transition().duration(700)
+            .attr("x", d => {
+                return mode === 2
+                    ? xScale(d.group) + innerScale(d.year)
+                    : xScale(d.group);
+            })
+            .attr("width", d => {
+                return mode === 2
+                    ? innerScale.bandwidth()
+                    : xScale.bandwidth();
+            })
+            .attr("y", d => yScale(d.value))
+            .attr("height", d => chartHeight - yScale(d.value))
+            .attr("fill", color);
+
+        const labels = chartGroup.selectAll(".label").data(data, d => d.group + d.year);
+        labels.exit().remove();
+
+        labels.enter().append("text")
+            .attr("class", "label")
+            .attr("text-anchor", "middle")
+            .attr("font-size", "12px")
+            .attr("fill", "#333")
+            .merge(labels)
+            .transition().duration(700)
+            .attr("x", d => {
+                return mode === 2
+                    ? xScale(d.group) + innerScale(d.year) + innerScale.bandwidth() / 2
+                    : xScale(d.group) + xScale.bandwidth() / 2;
+            })
+            .attr("y", d => yScale(d.value) - 5)
+            .text(d => d.value + "%");
+
+        xAxisGroup.call(d3.axisBottom(xScale));
+        yAxisGroup.call(d3.axisLeft(yScale));
+
+        document.getElementById("caption").textContent = caption;
+        svg.attr("aria-label", caption);
+    }
+</script>
+
+</body>
+</html>
