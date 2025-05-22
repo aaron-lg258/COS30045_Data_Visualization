@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 2.1 – D3 Data Binding (Styled + Header/Footer)</title>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #4a90e2, #9013fe);
+      color: white;
+      padding: 1em 2em;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    header h1 {
+      font-size: 1.75rem;
+      letter-spacing: 1px;
+    }
+    header nav {
+      margin-top: 0.5em;
+    }
+    header nav a {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      margin-right: 1.5em;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    header nav a:hover {
+      color: #fff;
+    }
+
+    main {
+      flex: 1;
+      max-width: 700px;
+      margin: 2em auto;
+      padding: 0 1em;
+    }
+
+    p {
+      line-height: 1.6;
+      margin: 1em 0;
+      padding: 1em;
+      border-radius: 6px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    p.ok {
+      background-color: #e8f5e9;
+      border-left: 4px solid #43a047;
+    }
+    p.warn {
+      background-color: #ffebee;
+      border-left: 4px solid #e53935;
+    }
+    p:hover {
+      transform: translateX(4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    footer {
+      background: #333;
+      color: #bbb;
+      text-align: center;
+      padding: 1em 0;
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Cat Videos Dashboard</h1>
+    <nav>
+      <a href="#">Home</a>
+      <a href="#">About</a>
+      <a href="#">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <script>
+      const data = [14, 5, 26, 23, 9, 17, 2, 28, 11, 6];
+
+      d3.select("main")
+        .selectAll("p")
+        .data(data)
+        .enter()
+        .append("p")
+        .text((d, i) => `Joe watched ${d} cat videos`)
+        .classed("warn", d => d > 10)
+        .classed("ok",   d => d <= 10)
+        .style("font-size", d => {
+          const size = 14 + d;  
+          return `${Math.min(size, 36)}px`;  
+        });
+    </script>
+  </main>
+
+  <footer>
+    © 2025 Cat Videos Inc. • <a href="mailto:info@catvideos.example">info@catvideos.example</a>
+  </footer>
+</body>
+</html>
