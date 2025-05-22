@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>2025 Monthly Sales Scatter Plot</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <h2>Sales Dashboard 2025</h2>
+  </header>
+
+  <h1>Monthly Sales Scatter Plot</h1>
+  <div class="chart">
+    <svg id="chart"></svg>
+  </div>
+
+  <footer class="site-footer">
+    <p>© 2025 Company Name. All rights reserved.</p>
+  </footer>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+    const width = 800 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+    const svg = d3.select("#chart")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    d3.csv("sales_2025.csv").then(data => {
+      data.forEach((d, i) => {
+        d.monthIndex = i + 1;
+        d.Sales = +d.Sales;
+      });
+
+      const x = d3.scaleLinear()
+        .domain([1, 12])
+        .range([0, width]);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.Sales) * 1.1])
+        .nice()
+        .range([height, 0]);
+
+      const xAxis = d3.axisBottom(x)
+        .ticks(12)
+        .tickFormat(i => data[i-1]?.Month || "");
+      const yAxis = d3.axisLeft(y).ticks(5).tickFormat(d3.format("$,"));
+
+      svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0, ${height})`)
+        .call(xAxis)
+        .selectAll("text")
+        .attr("transform", "rotate(-40)")
+        .style("text-anchor", "end");
+
+      svg.append("g")
+        .attr("class", "axis")
+        .call(yAxis);
+
+      svg.selectAll(".dot")
+        .data(data)
+        .join("circle")
+        .attr("class", "dot")
+        .attr("cx", d => x(d.monthIndex))
+        .attr("cy", d => y(d.Sales))
+        .attr("r", 6)
+        .attr("fill", "#4a90e2")
+        .on("mouseover", (event, d) => {
+          d3.select(event.currentTarget).attr("fill", "orange");
+        })
+        .on("mouseout", (event, d) => {
+          d3.select(event.currentTarget).attr("fill", "#4a90e2");
+        });
+
+      const n = data.length;
+      const sumX = d3.sum(data, d => d.monthIndex);
+      const sumY = d3.sum(data, d => d.Sales);
+      const sumXY = d3.sum(data, d => d.monthIndex * d.Sales);
+      const sumX2 = d3.sum(data, d => d.monthIndex * d.monthIndex);
+      const slope = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX);
+      const intercept = (sumY - slope*sumX) / n;
+
+      const lineData = [
+        { x: 1, y: slope*1 + intercept },
+        { x: 12, y: slope*12 + intercept }
+      ];
+
+      const line = d3.line()
+        .x(d => x(d.x))
+        .y(d => y(d.y));
+
+      svg.append("path")
+        .datum(lineData)
+        .attr("class", "trendline")
+        .attr("d", line)
+        .attr("stroke", "#ff4d4d")
+        .attr("stroke-width", 2)
+        .attr("fill", "none");
+    }).catch(console.error);
+  </script>
+</body>
+</html>
